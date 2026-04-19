@@ -54,8 +54,15 @@ const endpoint =
     if (!r.ok) {
       console.log("STATUS:", r.status);
       console.log("FULL ERROR:", JSON.stringify(data, null, 2));
-      return res.status(200).json({
-        reply: "ERROR: " + JSON.stringify(data)
+
+      if (r.status === 429) {
+        return res.status(429).json({
+          error: "API limit reached"
+        });
+      }
+
+      return res.status(r.status).json({
+        error: "Gemini request failed"
       });
     }
 

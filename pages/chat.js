@@ -165,11 +165,26 @@ export default function ChatPage(){
     setLoading(true)
     try{
       const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMsg] })
-      })
-      const data = await res.json()
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMsg]
+          })
+        });
+
+        // Handle API rate limit
+        if (res.status === 429) {
+          throw new Error("429");
+        }
+
+        // Handle other server errors
+        if (!res.ok) {
+          throw new Error("API_ERROR");
+        }
+
+        const data = await res.json();
       const assistantText = data?.reply || 'Sorry, no reply available.'
       setMessages(prev => [
         ...prev,
@@ -179,8 +194,19 @@ export default function ChatPage(){
           hasMapButton: true
         }
       ]);
-    }catch(err){
-      setMessages(prev => [...prev, { role: 'assistant', text: 'There was an error contacting the assistant. Try again later.' }])
+    }catch(err) {
+      let errorMessage =
+        err.message === "429"
+          ? "API limit reached. Please try again later."
+          : "There was an error contacting the assistant. Try again later.";
+
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: errorMessage
+        }
+      ]);
     }finally{ setLoading(false) }
   }
 
