@@ -11,17 +11,21 @@ export default function PlantDetail() {
 
   return (
     <main className="container">
-      <h1>{plant.scientificName} <small>({plant.commonNames.join(', ')})</small></h1>
+      <h1>{plant.scientificName} <small>({plant.commonNames?.join(', ') || ''})</small></h1>
       <div className="detail-grid">
         <div className="viewer">
-          <SketchfabEmbed html={plant.sketchfabEmbed} />
+          {plant?.sketchfabEmbed ? (
+  <SketchfabEmbed html={plant.sketchfabEmbed} />
+) : (
+  <div className="no-model">No model provided</div>
+)}
         </div>
         <div className="meta">
           <p className="lead">{plant.description}</p>
           <div className="info-cards">
             <InfoCard title="Uses" tone="positive">
               <ul>
-                {plant.uses.map((u,i) => (
+                {plant.uses?.map((u,i) => (
                   <li key={i}><strong>{u.condition}</strong>: {u.traditionalUse} — {u.preparation}</li>
                 ))}
               </ul>
