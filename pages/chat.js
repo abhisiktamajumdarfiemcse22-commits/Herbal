@@ -142,7 +142,6 @@ export default function ChatPage(){
   const [typingDots, setTypingDots] = useState('')
   const [customPrompt, setCustomPrompt] = useState('')
   const [showMap, setShowMap] = useState(false);
-  const [showSuggestion, setShowSuggestion] = useState(false);
   const bottomRef = useRef(null)
 
   useEffect(()=>{ if(bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' }) }, [messages])
@@ -172,8 +171,14 @@ export default function ChatPage(){
       })
       const data = await res.json()
       const assistantText = data?.reply || 'Sorry, no reply available.'
-      setMessages(prev => [...prev, { role: 'assistant', text: assistantText }]);
-      setShowSuggestion(true);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: assistantText,
+          hasMapButton: true
+        }
+      ]);
     }catch(err){
       setMessages(prev => [...prev, { role: 'assistant', text: 'There was an error contacting the assistant. Try again later.' }])
     }finally{ setLoading(false) }
@@ -203,7 +208,29 @@ export default function ChatPage(){
           {messages.map((m, i) => (
             m.role === 'system' ? null : (
               <div key={i} style={m.role==='user' ? styles.userBubble : styles.assistantBubble}>
-                <div style={{whiteSpace:'pre-wrap'}}>{m.text}</div>
+
+                <div style={{whiteSpace:'pre-wrap'}}>
+                  {m.text}
+                </div>
+
+                {m.hasMapButton && (
+                  <button
+                    onClick={() => setShowMap(true)}
+                    style={{
+                      marginTop: 8,
+                      padding: "6px 10px",
+                      background: "#0f766e",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "12px"
+                    }}
+                  >
+                    🌿 Find Ayurvedic Shops
+                  </button>
+                )}
+
               </div>
             )
           ))}
@@ -216,32 +243,7 @@ export default function ChatPage(){
             </div>
           )}
 
-          {showSuggestion && !showMap && (
-            <div style={styles.assistantBubble}>
-              <div>Need medicine nearby?</div>
-
-              <button
-                onClick={() => {
-                  setShowMap(true);
-                  setShowSuggestion(false);
-                }}
-                style={{
-                  marginTop: 6,
-                  padding: "6px 10px",
-                  background: "#0f766e",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "12px"
-                }}
-              >
-                🌿 Find Ayurvedic Shops
-              </button>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
+        <div ref={bottomRef} />
         </div>
 
         <div style={styles.composer}>
@@ -304,7 +306,8 @@ export default function ChatPage(){
           background: "#fff",
           borderRadius: "12px",
           overflow: "hidden",
-          position: "relative"
+          position: "relative",
+          pointerEvents: "auto",
         }}>
           <button
             onClick={() => setShowMap(false)}
