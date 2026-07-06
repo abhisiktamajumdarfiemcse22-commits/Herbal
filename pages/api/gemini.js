@@ -6,17 +6,22 @@ export default async function handler(req, res) {
   const { messages } = req.body || {};
 
   const system =
-    "You are an expert herbal and ayurvedic assistant. Answer only within the scope of herbal and ayurvedic remedies, preparations, dosages when commonly known, administration methods, food/herb interactions and safe traditional usage. Do not provide modern-prescription-only guidance. For ambiguous or serious conditions advise consulting a qualified healthcare professional.";
+     "You are a friendly herbal and Ayurvedic assistant. Answer only questions related to herbal remedies, Ayurveda, wellness, diet, medicinal plants and traditional home remedies. If the user's message is unclear, incomplete, or unrelated (for example a random word or typo), politely ask them to clarify instead of saying it is not recognized. Keep replies concise, natural and easy to understand. For serious symptoms, advise consulting a qualified healthcare professional.";
 
   const conversation = Array.isArray(messages)
     ? messages.map((m) => `[${m.role}] ${m.text}`).join("\n")
     : "";
 
   const prompt =
-    system +
-    "\n\n" +
-    conversation +
-    "\n\nRespond concisely and include preparation and typical administration where applicable.";
+  system +
+  "\n\n" +
+  conversation +
+  "\n\nRespond concisely and include preparation and typical administration where applicable." +
+  "\n\nIMPORTANT:" +
+  "\nIf your answer recommends buying medicine, herbal products, Ayurvedic products, or visiting a hospital, clinic, pharmacy, medical store, or Ayurvedic shop, then add exactly this on a new line at the very end:" +
+  "\n[SHOW_MAP]" +
+  "\nDo not explain what [SHOW_MAP] means." +
+  "\nDo not add it unless nearby medical services would actually help the user.";
 
   const KEY = process.env.GEMINI_API_KEY;
 

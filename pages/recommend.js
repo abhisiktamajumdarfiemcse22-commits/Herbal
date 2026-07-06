@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function RecommendPage(){
   const sections = ['Seasonal', 'Disease', 'Wellness & Diet']
@@ -26,10 +28,22 @@ export default function RecommendPage(){
     setMessages(prev=>[...prev, {role:'user', text:q}])
     try{
       const res = await fetch('/api/gemini', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ messages:[{role:'user', text: `${active} recommendation: ${q}`} ] }) })
-      const j = await res.json()
-      const reply = j?.reply || j?.candidates?.[0]?.output || j?.text || JSON.stringify(j)
-      setResponse(reply)
-      setMessages(prev=>[...prev, {role:'assistant', text: reply}])
+      const j = await res.json();
+
+      let reply =
+        j?.reply ||
+        j?.candidates?.[0]?.output ||
+        j?.text ||
+        JSON.stringify(j);
+
+      // Remove the map tag
+      reply = reply.replace(/\[SHOW_MAP\]/g, "").trim();
+
+      setResponse(reply);
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", text: reply }
+      ]);
     }catch(err){
       setResponse('Error getting recommendation — check server logs.')
     }finally{ setLoading(false) }
@@ -81,11 +95,25 @@ export default function RecommendPage(){
 
             <div ref={containerRef} style={styles.resultArea}>
               {messages.map((m,i)=> (
-                <div key={i} style={m.role==='user' ? styles.qBubble : styles.aBubble}><div style={{whiteSpace:'pre-wrap'}}>{m.text}</div></div>
+                <div key={i} style={m.role==='user' ? styles.qBubble : styles.aBubble}>
+                  <div style={{whiteSpace:'pre-wrap'}}>
+                    {m.role === "assistant" ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {m.text}
+                      </ReactMarkdown>
+                    ) : (
+                      m.text
+                    )}
+                  </div>
+                </div>
               ))}
 
               {response && (
-                <div style={styles.aBubble}><div style={{whiteSpace:'pre-wrap'}}>{response}</div></div>
+                <div style={styles.aBubble}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {response}
+                  </ReactMarkdown>
+                </div>
               )}
             </div>
 

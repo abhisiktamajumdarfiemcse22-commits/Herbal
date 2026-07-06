@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from 'react'
 import dynamic from "next/dynamic";
 
@@ -185,13 +186,18 @@ export default function ChatPage(){
         }
 
         const data = await res.json();
-      const assistantText = data?.reply || 'Sorry, no reply available.'
+      const rawReply = data?.reply || "Sorry, no reply available.";
+
+      const shouldShowMap = rawReply.includes("[SHOW_MAP]");
+
+      const assistantText = rawReply.replace("[SHOW_MAP]", "").trim();
+
       setMessages(prev => [
         ...prev,
         {
-          role: 'assistant',
+          role: "assistant",
           text: assistantText,
-          hasMapButton: true
+          hasMapButton: shouldShowMap
         }
       ]);
     }catch(err) {
@@ -235,8 +241,14 @@ export default function ChatPage(){
             m.role === 'system' ? null : (
               <div key={i} style={m.role==='user' ? styles.userBubble : styles.assistantBubble}>
 
-                <div style={{whiteSpace:'pre-wrap'}}>
-                  {m.text}
+                <div
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    lineHeight: "1.6",
+                    fontSize: "14px"
+                  }}
+                >
+                  <ReactMarkdown>{m.text}</ReactMarkdown>
                 </div>
 
                 {m.hasMapButton && (
