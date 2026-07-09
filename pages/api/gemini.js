@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
   try {
 const endpoint =
-  `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${KEY}`;
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${KEY}`;
 
     const payload = {
       contents: [
