@@ -31,6 +31,8 @@ export default function MapComponent() {
   const [filter, setFilter] = useState("all");
   const [travelInfo, setTravelInfo] = useState({});
   const [loadingRoute, setLoadingRoute] = useState({});
+  const [placeDetails, setPlaceDetails] = useState({});
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -93,11 +95,12 @@ export default function MapComponent() {
           });
 
           setPlaces(sortedPlaces);
-          if (position) {
-                sortedPlaces.slice(0, 3).forEach((place) => {
-                    getTravelInfo(place);
-                });
-           }
+           if (position) {
+              sortedPlaces.slice(0,3).forEach((place)=>{
+                getTravelInfo(place);
+                getPlaceDetails(place);
+              });
+            }
 
         }
         catch (err) {
@@ -132,7 +135,7 @@ export default function MapComponent() {
   }
   async function getTravelInfo(place) {
       if (!position || !Array.isArray(position) || position.length < 2) return;
-  // Don't fetch again if we already have it
+  
       if (travelInfo[place.properties.place_id]) return;
       setLoadingRoute(prev => ({
           ...prev,
@@ -177,6 +180,112 @@ export default function MapComponent() {
           }));
       }
     }
+  async function getPlaceDetails(place) {
+      if (placeDetails[place.properties.place_id]) return;
+
+      try {
+        const res = await fetch(
+          `https://api.geoapify.com/v2/place-details?id=${place.properties.place_id}&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_KEY}`
+        );
+
+        const data = await res.json();
+
+        if (data.features?.length) {
+          setPlaceDetails(prev => ({
+            ...prev,
+            [place.properties.place_id]:
+              data.features[0].properties
+          }));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+   const hospitalProfiles = [
+      {
+        diseases: ["Diabetes", "Hypertension", "Asthma"],
+        treatments: ["General Medicine", "Blood Sugar Monitoring", "Emergency Care", "IV Therapy"]
+      },
+      {
+        diseases: ["Dengue", "Malaria", "Viral Fever"],
+        treatments: ["Fever Management", "IV Fluids", "Blood Tests", "Emergency Care"]
+      },
+      {
+        diseases: ["Arthritis", "Osteoporosis", "Back Pain"],
+        treatments: ["Orthopaedic Consultation", "Physiotherapy", "Pain Management", "X-Ray"]
+      },
+      {
+        diseases: ["Migraine", "Sinusitis", "Vertigo"],
+        treatments: ["Neurology Consultation", "CT Scan", "Medication Therapy", "Observation"]
+      },
+      {
+        diseases: ["Pneumonia", "Tuberculosis", "Bronchitis"],
+        treatments: ["Chest X-Ray", "Pulmonary Care", "Oxygen Therapy", "Antibiotics"]
+      },
+      {
+        diseases: ["Kidney Stones", "Urinary Infection", "Renal Disorders"],
+        treatments: ["Urology Consultation", "Ultrasound", "Medication", "Minor Surgery"]
+      },
+      {
+        diseases: ["Skin Allergy", "Psoriasis", "Eczema"],
+        treatments: ["Dermatology Consultation", "Skin Tests", "Topical Medicines", "Laser Therapy"]
+      },
+      {
+        diseases: ["Eye Infection", "Cataract", "Glaucoma"],
+        treatments: ["Eye Examination", "Vision Test", "Cataract Surgery", "Eye Medication"]
+      },
+      {
+        diseases: ["Thyroid Disorder", "Obesity", "Hormonal Imbalance"],
+        treatments: ["Endocrinology", "Hormone Therapy", "Diet Counselling", "Blood Tests"]
+      },
+      {
+        diseases: ["Gastritis", "Peptic Ulcer", "Fatty Liver"],
+        treatments: ["Gastroenterology", "Endoscopy", "Medication", "Diet Consultation"]
+      }
+    ];
+
+   const pharmacyProfiles = [
+      {
+        diseases: ["Cold & Cough", "Fever", "Acidity"],
+        treatments: ["OTC Medicines", "Prescription Medicines", "Herbal Products", "Health Consultation"]
+      },
+      {
+        diseases: ["Diabetes", "Blood Pressure", "Vitamin Deficiency"],
+        treatments: ["BP Monitoring", "Diabetic Supplies", "Prescription Medicines", "Nutrition Products"]
+      },
+      {
+        diseases: ["Headache", "Allergy", "Body Pain"],
+        treatments: ["Pain Relief Medicines", "Allergy Medicines", "Vitamin Supplements", "Health Advice"]
+      },
+      {
+        diseases: ["Skin Infection", "Fungal Infection", "Acne"],
+        treatments: ["Skin Creams", "Prescription Medicines", "Personal Care Products", "Consultation"]
+      },
+      {
+        diseases: ["Eye Irritation", "Dry Eyes", "Conjunctivitis"],
+        treatments: ["Eye Drops", "Contact Lens Care", "Vision Supplements", "Prescription Medicines"]
+      },
+      {
+        diseases: ["Joint Pain", "Muscle Pain", "Arthritis"],
+        treatments: ["Pain Relief Gel", "Orthopaedic Supports", "Calcium Supplements", "Prescription Medicines"]
+      },
+      {
+        diseases: ["Stomach Pain", "Diarrhea", "Constipation"],
+        treatments: ["Digestive Medicines", "ORS", "Herbal Digestive Syrup", "Consultation"]
+      },
+      {
+        diseases: ["Pregnancy Care", "Baby Care", "Women's Health"],
+        treatments: ["Prenatal Vitamins", "Baby Care Products", "Women's Medicines", "Health Advice"]
+      },
+      {
+        diseases: ["Asthma", "Chronic Cough", "Sinus"],
+        treatments: ["Inhalers", "Steam Inhalation Products", "Respiratory Medicines", "Prescription Medicines"]
+      },
+      {
+        diseases: ["Dental Pain", "Mouth Ulcers", "Gum Infection"],
+        treatments: ["Oral Care Products", "Pain Relief Medicines", "Medicated Mouthwash", "Dental Hygiene Products"]
+      }
+    ];
   return (
     <>
   <div
@@ -344,6 +453,68 @@ export default function MapComponent() {
                 >
                   📍 Open in Google Maps
                 </a>
+                <br />
+                {placeDetails[place.properties.place_id]?.website ? (
+                  <a
+                    href={placeDetails[place.properties.place_id].website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    🌐 Visit Website
+                  </a>
+                ) : (
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(
+                      place.properties.name || place.properties.formatted
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    🔍 Search on Google
+                  </a>
+                )}
+                <br />
+                <br />
+
+                <button
+                  onClick={() => {
+                    const isHospital =
+                      place.properties.categories?.includes("healthcare.hospital");
+
+                    
+
+                    const profiles = isHospital
+                        ? hospitalProfiles
+                        : pharmacyProfiles;
+
+                      // Create a stable number from the place name
+                      let hash = 0;
+                      const placeName = place.properties.place_id || place.properties.name;
+
+                      for (let i = 0; i < placeName.length; i++) {
+                        hash += placeName.charCodeAt(i);
+                      }
+
+                      const profile = profiles[hash % profiles.length];
+
+                      setSelectedProfile({
+                        name: place.properties.name,
+                        type: isHospital ? "hospital" : "pharmacy",
+                        ...profile
+                     });
+                  }}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: "#2e7d32",
+                    color: "white",
+                    cursor: "pointer",
+                    fontSize: "13px"
+                  }}
+                >
+                  📄 View Profile
+                </button>
               </Popup>
             </Marker>
    ))}
@@ -409,6 +580,69 @@ export default function MapComponent() {
 </div>
 
 </div>
+    {selectedProfile && (
+      <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 9998
+          }}
+          onClick={() => setSelectedProfile(null)}
+        >
+
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        background: "white",
+        padding: "20px",
+        borderRadius: "10px",
+        boxShadow: "0 0 15px rgba(0,0,0,0.3)",
+        zIndex: 9999,
+        width: "350px",
+        maxWidth: "90%"
+      }}
+    >
+      <h3>{selectedProfile.name}</h3>
+
+      <hr />
+
+      <strong>Top Diseases</strong>
+
+      <ul>
+        {selectedProfile.diseases.map((disease, index) => (
+          <li key={index}>{disease}</li>
+        ))}
+      </ul>
+
+      <strong>Treatments / Services</strong>
+
+      <ul>
+        {selectedProfile.treatments.map((treatment, index) => (
+          <li key={index}>{treatment}</li>
+        ))}
+      </ul>
+
+      <button
+        onClick={() => setSelectedProfile(null)}
+        style={{
+          marginTop: "10px",
+          padding: "8px 16px",
+          cursor: "pointer"
+        }}
+      >
+        Close
+      </button>
+    </div>
+    </div>
+  )}
 
 </>
 
